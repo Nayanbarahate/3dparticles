@@ -6,180 +6,234 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Nayan – Particle Universe</title>
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { background:#000; overflow:hidden; }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:#000;overflow:hidden;}
+  #three-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;}
+  #hand-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;}
 
-#three-canvas { position:fixed; top:0; left:0; width:100%; height:100%; z-index:1; }
-
-/* Hand skeleton drawn HERE — visible on screen just like the original */
-#hand-canvas  { position:fixed; top:0; left:0; width:100%; height:100%; z-index:2; pointer-events:none; }
-
-#name-tag {
-position:fixed; top:36px; left:50%; transform:translateX(-50%);
-color:#00e5ff; font-size:clamp(16px,5vw,28px);
-font-family:‘Courier New’,monospace; letter-spacing:0.45em; text-transform:uppercase;
-text-shadow:0 0 18px #00e5ff,0 0 40px #0055ff;
-z-index:10; pointer-events:none;
-animation:glow 3s ease-in-out infinite;
+#name-tag{
+position:fixed;top:36px;left:50%;transform:translateX(-50%);
+color:#00e5ff;font-size:clamp(16px,5vw,28px);
+font-family:‘Courier New’,monospace;letter-spacing:0.45em;text-transform:uppercase;
+z-index:10;pointer-events:none;animation:glow 3s ease-in-out infinite;
 }
-@keyframes glow {
-0%,100%{ text-shadow:0 0 18px #00e5ff,0 0 40px #0055ff; }
-50%    { text-shadow:0 0 30px #00e5ff,0 0 70px #0077ff,0 0 100px #00aaff; }
+@keyframes glow{
+0%,100%{text-shadow:0 0 18px #00e5ff,0 0 40px #0055ff;}
+50%{text-shadow:0 0 30px #00e5ff,0 0 70px #0077ff,0 0 100px #00aaff;}
 }
-
-#status {
-position:fixed; top:82px; left:50%; transform:translateX(-50%);
-color:rgba(0,229,255,0.5); font-size:11px; letter-spacing:0.2em;
-font-family:‘Courier New’,monospace; z-index:10; pointer-events:none; text-align:center;
+#status{
+position:fixed;top:82px;left:50%;transform:translateX(-50%);
+color:rgba(0,229,255,0.5);font-size:11px;letter-spacing:0.2em;
+font-family:‘Courier New’,monospace;z-index:10;pointer-events:none;text-align:center;
 }
-
-#cam-btn {
-position:fixed; bottom:52px; left:50%; transform:translateX(-50%);
-background:rgba(0,229,255,0.07); border:1px solid rgba(0,229,255,0.4);
-color:#00e5ff; padding:12px 32px; border-radius:30px;
-font-size:13px; letter-spacing:0.2em; cursor:pointer; z-index:10;
-font-family:‘Courier New’,monospace; transition:all 0.3s;
+#cam-btn{
+position:fixed;bottom:52px;left:50%;transform:translateX(-50%);
+background:rgba(0,229,255,0.07);border:1px solid rgba(0,229,255,0.4);
+color:#00e5ff;padding:12px 32px;border-radius:30px;
+font-size:13px;letter-spacing:0.2em;cursor:pointer;z-index:10;
+font-family:‘Courier New’,monospace;transition:all 0.3s;
 }
-#cam-btn:hover{ background:rgba(0,229,255,0.2); box-shadow:0 0 22px rgba(0,229,255,0.3); }
-
-#hint {
-position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
-color:rgba(0,229,255,0.35); font-size:10px; letter-spacing:0.14em;
-font-family:‘Courier New’,monospace; z-index:10; pointer-events:none; white-space:nowrap;
+#cam-btn:hover{background:rgba(0,229,255,0.2);box-shadow:0 0 22px rgba(0,229,255,0.3);}
+#hint{
+position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+color:rgba(0,229,255,0.35);font-size:10px;letter-spacing:0.14em;
+font-family:‘Courier New’,monospace;z-index:10;pointer-events:none;white-space:nowrap;
 }
-
-#video { display:none; }
+#video{display:none;}
 </style>
 
 </head>
 <body>
-
 <canvas id="three-canvas"></canvas>
 <canvas id="hand-canvas"></canvas>
-
 <div id="name-tag">✦ Nayan ✦</div>
 <div id="status">DRAG TO ROTATE · SCROLL TO ZOOM</div>
 <video id="video" autoplay playsinline muted></video>
 <button id="cam-btn">👋 Enable Hand Tracking</button>
-<div id="hint">OPEN PALM → ROTATE &nbsp;·&nbsp; PINCH → ZOOM</div>
+<div id="hint">OPEN PALM → BLAST &nbsp;·&nbsp; CLOSE FIST → COLLAPSE &nbsp;·&nbsp; PINCH → ZOOM</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <script>
 // ═══════════════════════════════════════
-//  THREE.JS SCENE
+//  RENDERER + SCENE
 // ═══════════════════════════════════════
 const threeCanvas = document.getElementById('three-canvas');
-const renderer = new THREE.WebGLRenderer({ canvas:threeCanvas, antialias:true });
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-renderer.setSize(innerWidth,innerHeight);
+const renderer = new THREE.WebGLRenderer({ canvas: threeCanvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
 renderer.setClearColor(0x000000);
 
 const scene  = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 500);
+const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 500);
 camera.position.z = 3.5;
 
-// Stars
-const sp = new Float32Array(2400*3);
-for(let i=0;i<sp.length;i++) sp[i]=(Math.random()-.5)*100;
-const sg=new THREE.BufferGeometry();
-sg.setAttribute('position',new THREE.BufferAttribute(sp,3));
-scene.add(new THREE.Points(sg,new THREE.PointsMaterial({color:0xffffff,size:0.05,transparent:true,opacity:0.75})));
+// ── Starfield ──────────────────────────
+const starArr = new Float32Array(2400 * 3);
+for (let i = 0; i < starArr.length; i++) starArr[i] = (Math.random() - 0.5) * 100;
+const starGeo = new THREE.BufferGeometry();
+starGeo.setAttribute('position', new THREE.BufferAttribute(starArr, 3));
+scene.add(new THREE.Points(starGeo,
+  new THREE.PointsMaterial({ color: 0xffffff, size: 0.05, transparent: true, opacity: 0.75 })));
 
-// Blue dot sphere
-const sphereGroup = new THREE.Group();
-scene.add(sphereGroup);
-const dp=[],dc=[];
-for(let la=0;la<=46;la++){
-  const th=(la/46)*Math.PI;
-  for(let lo=0;lo<=46;lo++){
-    const ph=(lo/46)*2*Math.PI;
-    dp.push(Math.sin(th)*Math.cos(ph), Math.cos(th), Math.sin(th)*Math.sin(ph));
-    const b=0.5+0.5*Math.abs(Math.cos(th));
-    dc.push(0.05*b,0.22*b,b);
+// ── Blue dot sphere ────────────────────
+// We store BOTH origin positions (sphere) and exploded positions per particle
+const SPHERE_ROWS = 46, SPHERE_COLS = 46;
+const SPHERE_COUNT = (SPHERE_ROWS + 1) * (SPHERE_COLS + 1);
+
+const originPos   = new Float32Array(SPHERE_COUNT * 3); // sphere positions
+const explodePos  = new Float32Array(SPHERE_COUNT * 3); // exploded positions
+const currentPos  = new Float32Array(SPHERE_COUNT * 3); // lerped current
+const dotColors   = new Float32Array(SPHERE_COUNT * 3);
+
+let idx = 0;
+for (let la = 0; la <= SPHERE_ROWS; la++) {
+  const th = (la / SPHERE_ROWS) * Math.PI;
+  for (let lo = 0; lo <= SPHERE_COLS; lo++) {
+    const ph = (lo / SPHERE_COLS) * 2 * Math.PI;
+    // Sphere origin
+    const ox = Math.sin(th) * Math.cos(ph);
+    const oy = Math.cos(th);
+    const oz = Math.sin(th) * Math.sin(ph);
+    originPos[idx * 3]     = ox;
+    originPos[idx * 3 + 1] = oy;
+    originPos[idx * 3 + 2] = oz;
+    // Explode: each particle flies outward in a random burst direction + offset
+    const blastR = 2.5 + Math.random() * 3.5;
+    const ra = Math.random() * Math.PI * 2;
+    const rb = Math.random() * Math.PI;
+    explodePos[idx * 3]     = Math.sin(rb) * Math.cos(ra) * blastR;
+    explodePos[idx * 3 + 1] = Math.cos(rb) * blastR;
+    explodePos[idx * 3 + 2] = Math.sin(rb) * Math.sin(ra) * blastR;
+    // Start at origin
+    currentPos[idx * 3]     = ox;
+    currentPos[idx * 3 + 1] = oy;
+    currentPos[idx * 3 + 2] = oz;
+    // Color
+    const b = 0.5 + 0.5 * Math.abs(oy);
+    dotColors[idx * 3]     = 0.05 * b;
+    dotColors[idx * 3 + 1] = 0.22 * b;
+    dotColors[idx * 3 + 2] = b;
+    idx++;
   }
 }
-const dg=new THREE.BufferGeometry();
-dg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(dp),3));
-dg.setAttribute('color',new THREE.BufferAttribute(new Float32Array(dc),3));
-sphereGroup.add(new THREE.Points(dg,new THREE.PointsMaterial({size:0.02,vertexColors:true,transparent:true,opacity:0.95})));
-const lm=new THREE.LineBasicMaterial({color:0x1133dd,transparent:true,opacity:0.22});
-for(let i=0;i<=10;i++){
-  const th=(i/10)*Math.PI,pts=[];
-  for(let j=0;j<=64;j++) pts.push(new THREE.Vector3(Math.sin(th)*Math.cos(j/64*2*Math.PI),Math.cos(th),Math.sin(th)*Math.sin(j/64*2*Math.PI)));
-  sphereGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),lm));
+
+const dotGeo = new THREE.BufferGeometry();
+dotGeo.setAttribute('position', new THREE.BufferAttribute(currentPos, 3));
+dotGeo.setAttribute('color',    new THREE.BufferAttribute(dotColors, 3));
+const dotMat = new THREE.PointsMaterial({ size: 0.022, vertexColors: true, transparent: true, opacity: 0.95 });
+const dotSphere = new THREE.Points(dotGeo, dotMat);
+const sphereGroup = new THREE.Group();
+sphereGroup.add(dotSphere);
+scene.add(sphereGroup);
+
+// Wireframe lines (static, always visible)
+const wireMat = new THREE.LineBasicMaterial({ color: 0x1133dd, transparent: true, opacity: 0.2 });
+for (let i = 0; i <= 10; i++) {
+  const th = (i / 10) * Math.PI, pts = [];
+  for (let j = 0; j <= 64; j++)
+    pts.push(new THREE.Vector3(Math.sin(th) * Math.cos(j/64*2*Math.PI), Math.cos(th), Math.sin(th) * Math.sin(j/64*2*Math.PI)));
+  sphereGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), wireMat));
 }
-for(let i=0;i<20;i++){
-  const ph=(i/20)*2*Math.PI,pts=[];
-  for(let j=0;j<=64;j++) pts.push(new THREE.Vector3(Math.sin(j/64*Math.PI)*Math.cos(ph),Math.cos(j/64*Math.PI),Math.sin(j/64*Math.PI)*Math.sin(ph)));
-  sphereGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),lm));
+for (let i = 0; i < 20; i++) {
+  const ph = (i / 20) * 2 * Math.PI, pts = [];
+  for (let j = 0; j <= 64; j++)
+    pts.push(new THREE.Vector3(Math.sin(j/64*Math.PI) * Math.cos(ph), Math.cos(j/64*Math.PI), Math.sin(j/64*Math.PI) * Math.sin(ph)));
+  sphereGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), wireMat));
 }
 
-// Teal particle ring
-const ringGroup=new THREE.Group(); scene.add(ringGroup);
-const rp=[],rc=[];
-for(let i=0;i<12000;i++){
-  const a=Math.random()*Math.PI*2,sp2=(Math.random()-.5)*0.52,r=1.62+sp2*0.38;
-  rp.push(r*Math.cos(a),(Math.random()-.5)*0.25+sp2*0.12,r*Math.sin(a));
-  const t=0.3+Math.random()*0.7; rc.push(0,t*0.9,t*0.72);
+// ── Teal particle ring ─────────────────
+const ringGroup = new THREE.Group(); scene.add(ringGroup);
+const rp = [], rc = [];
+for (let i = 0; i < 12000; i++) {
+  const a = Math.random() * Math.PI * 2, sp = (Math.random() - 0.5) * 0.52, r = 1.62 + sp * 0.38;
+  rp.push(r * Math.cos(a), (Math.random() - 0.5) * 0.25 + sp * 0.12, r * Math.sin(a));
+  const t = 0.3 + Math.random() * 0.7; rc.push(0, t * 0.9, t * 0.72);
 }
-const rg=new THREE.BufferGeometry();
-rg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(rp),3));
-rg.setAttribute('color',new THREE.BufferAttribute(new Float32Array(rc),3));
-const ring=new THREE.Points(rg,new THREE.PointsMaterial({size:0.011,vertexColors:true,transparent:true,opacity:0.88}));
-ring.rotation.x=0.28; ringGroup.add(ring);
+const ringGeo = new THREE.BufferGeometry();
+ringGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(rp), 3));
+ringGeo.setAttribute('color',    new THREE.BufferAttribute(new Float32Array(rc), 3));
+const ring = new THREE.Points(ringGeo, new THREE.PointsMaterial({ size: 0.011, vertexColors: true, transparent: true, opacity: 0.88 }));
+ring.rotation.x = 0.28; ringGroup.add(ring);
 
-// Constellations
-const cm2=new THREE.LineBasicMaterial({color:0x00aaff,transparent:true,opacity:0.55});
-const pm2=new THREE.PointsMaterial({color:0x00ccff,size:0.055});
-[[[2.4,-.4,-.8],[2.75,.15,-1],[3.1,-.2,-.9],[2.9,.5,-.7]],
- [[-2.4,.7,-1.2],[-2.85,.1,-1],[-3.1,.55,-.8]]
-].forEach(pts=>{
-  const v=pts.map(p=>new THREE.Vector3(...p));
-  const g=new THREE.BufferGeometry().setFromPoints(v);
-  scene.add(new THREE.Line(g,cm2)); scene.add(new THREE.Points(g,pm2));
+// ── Constellations ─────────────────────
+const cm = new THREE.LineBasicMaterial({ color: 0x00aaff, transparent: true, opacity: 0.55 });
+const pm = new THREE.PointsMaterial({ color: 0x00ccff, size: 0.055 });
+[[[2.4, -.4, -.8],[2.75, .15, -1],[3.1, -.2, -.9],[2.9, .5, -.7]],
+ [[-2.4, .7, -1.2],[-2.85, .1, -1],[-3.1, .55, -.8]]
+].forEach(pts => {
+  const v = pts.map(p => new THREE.Vector3(...p));
+  const g = new THREE.BufferGeometry().setFromPoints(v);
+  scene.add(new THREE.Line(g, cm)); scene.add(new THREE.Points(g, pm));
 });
+
+// ═══════════════════════════════════════
+//  BLAST STATE MACHINE
+// ═══════════════════════════════════════
+// blastT: 0 = full sphere, 1 = full explode
+let blastT      = 0;   // current lerp value
+let blastTarget = 0;   // target (0 or 1)
+let blastSpeed  = 0.028; // lerp speed per frame
+
+// Smooth easing function (ease in-out cubic)
+function easeInOutCubic(t) {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+function updateSphereParticles() {
+  const easedT = easeInOutCubic(blastT);
+  for (let i = 0; i < SPHERE_COUNT; i++) {
+    currentPos[i*3]   = originPos[i*3]   + (explodePos[i*3]   - originPos[i*3])   * easedT;
+    currentPos[i*3+1] = originPos[i*3+1] + (explodePos[i*3+1] - originPos[i*3+1]) * easedT;
+    currentPos[i*3+2] = originPos[i*3+2] + (explodePos[i*3+2] - originPos[i*3+2]) * easedT;
+  }
+  dotGeo.attributes.position.needsUpdate = true;
+  // Fade dot opacity based on blast
+  dotMat.opacity = 0.95 - easedT * 0.5;
+  dotMat.size    = 0.022 + easedT * 0.018;
+}
 
 // ═══════════════════════════════════════
 //  MOUSE / TOUCH CONTROLS
 // ═══════════════════════════════════════
-let rotX=0,rotY=0,tRotX=0,tRotY=0,zoom=3.5,tZoom=3.5;
-let dragging=false,lmx=0,lmy=0;
+let rotX = 0, rotY = 0, tRotX = 0, tRotY = 0;
+let zoom = 3.5, tZoom = 3.5;
+let dragging = false, lmx = 0, lmy = 0;
 
-threeCanvas.addEventListener('mousedown',e=>{dragging=true;lmx=e.clientX;lmy=e.clientY;});
-addEventListener('mouseup',()=>dragging=false);
-addEventListener('mousemove',e=>{
-  if(!dragging)return;
-  tRotY+=(e.clientX-lmx)*0.007; tRotX+=(e.clientY-lmy)*0.007;
-  lmx=e.clientX; lmy=e.clientY;
+threeCanvas.addEventListener('mousedown', e => { dragging = true; lmx = e.clientX; lmy = e.clientY; });
+addEventListener('mouseup', () => dragging = false);
+addEventListener('mousemove', e => {
+  if (!dragging) return;
+  tRotY += (e.clientX - lmx) * 0.006; tRotX += (e.clientY - lmy) * 0.006;
+  lmx = e.clientX; lmy = e.clientY;
 });
-addEventListener('wheel',e=>{tZoom=Math.max(1.5,Math.min(9,tZoom+e.deltaY*0.005));});
+addEventListener('wheel', e => { tZoom = Math.max(1.5, Math.min(9, tZoom + e.deltaY * 0.005)); });
 
-let lastTD=null;
-threeCanvas.addEventListener('touchstart',e=>{
-  if(e.touches.length===1){dragging=true;lmx=e.touches[0].clientX;lmy=e.touches[0].clientY;}
-},{passive:true});
-addEventListener('touchend',()=>{dragging=false;lastTD=null;});
-addEventListener('touchmove',e=>{
-  if(e.touches.length===1&&dragging){
-    tRotY+=(e.touches[0].clientX-lmx)*0.007; tRotX+=(e.touches[0].clientY-lmy)*0.007;
-    lmx=e.touches[0].clientX; lmy=e.touches[0].clientY;
-  } else if(e.touches.length===2){
-    const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
-    if(lastTD) tZoom=Math.max(1.5,Math.min(9,tZoom-(d-lastTD)*0.012));
-    lastTD=d;
+let lastTD = null;
+threeCanvas.addEventListener('touchstart', e => {
+  if (e.touches.length === 1) { dragging = true; lmx = e.touches[0].clientX; lmy = e.touches[0].clientY; }
+}, { passive: true });
+addEventListener('touchend', () => { dragging = false; lastTD = null; });
+addEventListener('touchmove', e => {
+  if (e.touches.length === 1 && dragging) {
+    tRotY += (e.touches[0].clientX - lmx) * 0.006; tRotX += (e.touches[0].clientY - lmy) * 0.006;
+    lmx = e.touches[0].clientX; lmy = e.touches[0].clientY;
+  } else if (e.touches.length === 2) {
+    const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+    if (lastTD) tZoom = Math.max(1.5, Math.min(9, tZoom - (d - lastTD) * 0.012));
+    lastTD = d;
   }
-},{passive:true});
+}, { passive: true });
 
 // ═══════════════════════════════════════
-//  HAND CANVAS — visible skeleton
+//  HAND CANVAS — glowing skeleton
 // ═══════════════════════════════════════
-const hCanvas=document.getElementById('hand-canvas');
-const hCtx=hCanvas.getContext('2d');
-hCanvas.width=innerWidth; hCanvas.height=innerHeight;
+const hCanvas = document.getElementById('hand-canvas');
+const hCtx    = hCanvas.getContext('2d');
+hCanvas.width  = innerWidth;
+hCanvas.height = innerHeight;
 
-// MediaPipe 21-landmark connections
-const CONNECTIONS=[
+const CONNECTIONS = [
   [0,1],[1,2],[2,3],[3,4],
   [0,5],[5,6],[6,7],[7,8],
   [5,9],[9,10],[10,11],[11,12],
@@ -187,165 +241,272 @@ const CONNECTIONS=[
   [13,17],[17,18],[18,19],[19,20],
   [0,17]
 ];
-const TIPS=[4,8,12,16,20];
+const TIPS = [4, 8, 12, 16, 20];
 
-function drawHand(lms){
-  hCtx.clearRect(0,0,hCanvas.width,hCanvas.height);
-  if(!lms||!lms.length) return;
+// Particle burst system for fingertips
+const bursts = []; // { x, y, vx, vy, life, maxLife, color }
 
-  const X=i=>(1-lms[i].x)*hCanvas.width;
-  const Y=i=>lms[i].y*hCanvas.height;
+function spawnBurst(x, y, count = 12) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 1.5 + Math.random() * 3.5;
+    bursts.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life: 1.0,
+      maxLife: 0.6 + Math.random() * 0.6,
+      size: 1.5 + Math.random() * 2.5
+    });
+  }
+}
 
-  // Glow lines
-  hCtx.lineWidth=2;
-  CONNECTIONS.forEach(([a,b])=>{
+function drawHand(lms, isOpen, isFist) {
+  // Draw burst particles
+  hCtx.clearRect(0, 0, hCanvas.width, hCanvas.height);
+
+  // Update + draw burst particles
+  for (let i = bursts.length - 1; i >= 0; i--) {
+    const b = bursts[i];
+    b.x += b.vx; b.y += b.vy;
+    b.vx *= 0.93; b.vy *= 0.93;
+    b.life -= 0.035 / b.maxLife;
+    if (b.life <= 0) { bursts.splice(i, 1); continue; }
+    const alpha = b.life * b.life;
     hCtx.beginPath();
-    hCtx.moveTo(X(a),Y(a)); hCtx.lineTo(X(b),Y(b));
-    hCtx.strokeStyle='rgba(0,200,255,0.65)';
-    hCtx.shadowColor='#00e5ff'; hCtx.shadowBlur=10;
+    hCtx.arc(b.x, b.y, b.size * b.life, 0, Math.PI * 2);
+    hCtx.fillStyle = `rgba(0,229,255,${alpha * 0.8})`;
+    hCtx.shadowColor = '#00e5ff'; hCtx.shadowBlur = 6;
+    hCtx.fill();
+  }
+  hCtx.shadowBlur = 0;
+
+  if (!lms || !lms.length) return;
+
+  const X = i => (1 - lms[i].x) * hCanvas.width;
+  const Y = i => lms[i].y * hCanvas.height;
+
+  // Line opacity: fade when blasting
+  const lineAlpha = 0.65 - blastT * 0.3;
+
+  // Skeleton lines
+  hCtx.lineWidth = 1.8;
+  CONNECTIONS.forEach(([a, b]) => {
+    hCtx.beginPath();
+    hCtx.moveTo(X(a), Y(a)); hCtx.lineTo(X(b), Y(b));
+    hCtx.strokeStyle = `rgba(0,200,255,${lineAlpha})`;
+    hCtx.shadowColor = '#00e5ff'; hCtx.shadowBlur = 10;
     hCtx.stroke();
   });
 
-  // Landmark dots with radial glow
-  lms.forEach((pt,i)=>{
-    const x=X(i), y=Y(i);
-    const isTip=TIPS.includes(i), isWrist=i===0;
-    const r=isTip?7:isWrist?6:4;
+  // Landmark particles
+  lms.forEach((pt, i) => {
+    const x = X(i), y = Y(i);
+    const isTip  = TIPS.includes(i);
+    const isWrist = i === 0;
+    const r = isTip ? 7 : isWrist ? 6 : 4;
 
-    // Outer halo
-    hCtx.beginPath(); hCtx.arc(x,y,r*2.2,0,Math.PI*2);
-    hCtx.fillStyle=`rgba(0,229,255,${isTip?0.15:0.08})`;
-    hCtx.shadowBlur=0; hCtx.fill();
+    // Halo
+    hCtx.beginPath(); hCtx.arc(x, y, r * 2.5, 0, Math.PI * 2);
+    hCtx.fillStyle = `rgba(0,229,255,${isTip ? 0.14 : 0.07})`;
+    hCtx.shadowBlur = 0; hCtx.fill();
 
-    // Core particle
-    const g=hCtx.createRadialGradient(x,y,0,x,y,r);
-    g.addColorStop(0,'#ffffff');
-    g.addColorStop(0.35,'#00e5ff');
-    g.addColorStop(1,'rgba(0,80,255,0)');
-    hCtx.beginPath(); hCtx.arc(x,y,r,0,Math.PI*2);
-    hCtx.fillStyle=g;
-    hCtx.shadowColor='#00e5ff'; hCtx.shadowBlur=isTip?18:10;
+    // Core radial gradient dot
+    const g = hCtx.createRadialGradient(x, y, 0, x, y, r);
+    // Blast = more orange/white, fist = cool blue
+    if (isOpen) {
+      g.addColorStop(0, '#ffffff');
+      g.addColorStop(0.3, '#00ffee');
+      g.addColorStop(1, 'rgba(0,120,255,0)');
+    } else {
+      g.addColorStop(0, '#ffffff');
+      g.addColorStop(0.35, '#00e5ff');
+      g.addColorStop(1, 'rgba(0,80,255,0)');
+    }
+    hCtx.beginPath(); hCtx.arc(x, y, r, 0, Math.PI * 2);
+    hCtx.fillStyle = g;
+    hCtx.shadowColor = isOpen ? '#00ffcc' : '#00e5ff';
+    hCtx.shadowBlur = isTip ? 20 : 10;
     hCtx.fill();
   });
 
-  // Fingertip extra spark
-  TIPS.forEach(i=>{
-    const x=X(i),y=Y(i);
-    for(let s=0;s<4;s++){
-      const a=Math.random()*Math.PI*2, d=6+Math.random()*6;
-      hCtx.beginPath(); hCtx.arc(x+Math.cos(a)*d,y+Math.sin(a)*d,1,0,Math.PI*2);
-      hCtx.fillStyle='rgba(0,229,255,0.55)'; hCtx.shadowBlur=4; hCtx.fill();
-    }
-  });
+  // Spark particles at fingertips when open
+  if (isOpen) {
+    TIPS.forEach(i => {
+      const x = X(i), y = Y(i);
+      for (let s = 0; s < 3; s++) {
+        const a = Math.random() * Math.PI * 2, d = 5 + Math.random() * 10;
+        hCtx.beginPath(); hCtx.arc(x + Math.cos(a)*d, y + Math.sin(a)*d, 1.2, 0, Math.PI * 2);
+        hCtx.fillStyle = 'rgba(0,255,220,0.6)';
+        hCtx.shadowBlur = 5; hCtx.fill();
+      }
+    });
+  }
 
-  hCtx.shadowBlur=0;
+  hCtx.shadowBlur = 0;
 }
 
 // ═══════════════════════════════════════
-//  MEDIAPIPE SETUP
+//  MEDIAPIPE
 // ═══════════════════════════════════════
-const video=document.getElementById('video');
-const statusEl=document.getElementById('status');
-const camBtn=document.getElementById('cam-btn');
-let handEnabled=false, prevPinch=null, prevIX=null, prevIY=null;
+const video     = document.getElementById('video');
+const statusEl  = document.getElementById('status');
+const camBtn    = document.getElementById('cam-btn');
+let handEnabled = false;
+let prevPinch   = null, prevIX = null, prevIY = null;
+let lastIsOpen  = false;
+let lastIsFist  = false;
 
-function loadScript(src){
-  return new Promise((res,rej)=>{
-    const s=document.createElement('script');
-    s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s);
+// Smooth hand state transitions
+let openSmooth = 0; // 0=closed, 1=open (smoothed)
+
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s);
   });
 }
 
-camBtn.addEventListener('click',async()=>{
-  try{
-    const stream=await navigator.mediaDevices.getUserMedia({video:{width:640,height:480,facingMode:'user'}});
-    video.srcObject=stream; await video.play();
-    camBtn.style.display='none';
-    statusEl.textContent='LOADING HAND AI MODEL...';
+camBtn.addEventListener('click', async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: 'user' } });
+    video.srcObject = stream; await video.play();
+    camBtn.style.display = 'none';
+    statusEl.textContent = 'LOADING HAND AI MODEL...';
 
     await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js');
     await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js');
 
-    const hands=new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
-    hands.setOptions({maxNumHands:1,modelComplexity:1,minDetectionConfidence:0.75,minTrackingConfidence:0.6});
+    const hands = new Hands({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
+    hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.75, minTrackingConfidence: 0.65 });
 
-    hands.onResults(results=>{
-      const lms=results.multiHandLandmarks?.[0];
-      drawHand(lms);
+    hands.onResults(results => {
+      const lms = results.multiHandLandmarks?.[0];
 
-      if(!lms){
-        prevPinch=null; prevIX=null; prevIY=null;
-        statusEl.textContent='👋 SHOW HAND TO CONTROL';
+      if (!lms) {
+        // No hand → smoothly collapse back
+        blastTarget = 0;
+        prevPinch = null; prevIX = null; prevIY = null;
+        openSmooth += (0 - openSmooth) * 0.08;
+        drawHand(null, false, false);
+        statusEl.textContent = '👋 SHOW HAND TO CONTROL';
         return;
       }
 
-      const thumb=lms[4], index=lms[8], indexMCP=lms[5];
+      const thumb    = lms[4], index    = lms[8];
+      const indexMCP = lms[5], middleMCP= lms[9];
+      const middle   = lms[12], ring    = lms[16], pinky = lms[20];
 
-      // PINCH = thumb ↔ index distance → ZOOM
-      const pd=Math.hypot(thumb.x-index.x,thumb.y-index.y);
-      if(prevPinch!==null){
-        const delta=pd-prevPinch;
-        tZoom=Math.max(1.5,Math.min(9,tZoom-delta*20));
+      // ── Detect open palm ──────────────────────
+      // Open = multiple fingers extended above their MCP joint
+      const fingerExtended = (tip, mcp) => tip.y < mcp.y - 0.035;
+      const extCount =
+        (fingerExtended(index,  lms[5])  ? 1 : 0) +
+        (fingerExtended(middle, lms[9])  ? 1 : 0) +
+        (fingerExtended(ring,   lms[13]) ? 1 : 0) +
+        (fingerExtended(pinky,  lms[17]) ? 1 : 0);
+      const isOpen = extCount >= 3;
+      const isFist = extCount <= 1;
+
+      // Smooth open/close value
+      const targetOpen = isOpen ? 1 : 0;
+      openSmooth += (targetOpen - openSmooth) * 0.12;
+
+      // ── BLAST or COLLAPSE ─────────────────────
+      blastTarget = isOpen ? 1 : 0;
+
+      // Spawn burst particles when transitioning open
+      if (isOpen && !lastIsOpen) {
+        // Big burst when hand first opens
+        TIPS.forEach(ti => {
+          const x = (1 - lms[ti].x) * hCanvas.width;
+          const y = lms[ti].y * hCanvas.height;
+          spawnBurst(x, y, 20);
+        });
       }
-      prevPinch=pd;
-      const isPinching=pd<0.07;
+      lastIsOpen = isOpen;
+      lastIsFist = isFist;
 
-      // OPEN PALM → ROTATE (index extended above MCP)
-      const isOpen=index.y<indexMCP.y-0.04;
-      if(isOpen&&!isPinching&&prevIX!==null){
-        const dx=(1-index.x)-prevIX;
-        const dy=index.y-prevIY;
-        tRotY-=dx*8; tRotX+=dy*8;
+      // ── PINCH → ZOOM ──────────────────────────
+      const pd = Math.hypot(thumb.x - index.x, thumb.y - index.y);
+      if (prevPinch !== null) {
+        const delta = pd - prevPinch;
+        tZoom = Math.max(1.5, Math.min(9, tZoom - delta * 20));
       }
-      prevIX=1-index.x; prevIY=index.y;
+      prevPinch = pd;
+      const isPinching = pd < 0.065;
 
-      statusEl.textContent=isPinching?'🤏 PINCH — ZOOMING':isOpen?'🖐 PALM — ROTATING':'✊ CLOSE — LOCKED';
+      // ── OPEN PALM → ROTATE ────────────────────
+      if (isOpen && !isPinching && prevIX !== null) {
+        const dx = (1 - index.x) - prevIX;
+        const dy = index.y - prevIY;
+        tRotY -= dx * 7; tRotX += dy * 7;
+      }
+      prevIX = 1 - index.x; prevIY = index.y;
+
+      drawHand(lms, isOpen, isFist);
+
+      if (isPinching)      statusEl.textContent = '🤏 PINCH — ZOOMING';
+      else if (isOpen)     statusEl.textContent = '🖐 OPEN PALM — BLAST!';
+      else if (isFist)     statusEl.textContent = '✊ FIST — COLLAPSING';
+      else                 statusEl.textContent = '🤚 TRACKING...';
     });
 
-    const cam=new Camera(video,{
-      onFrame:async()=>await hands.send({image:video}),
-      width:640,height:480
+    const cam = new Camera(video, {
+      onFrame: async () => await hands.send({ image: video }),
+      width: 640, height: 480
     });
     await cam.start();
-    handEnabled=true;
-    statusEl.textContent='👋 SHOW HAND TO CONTROL';
+    handEnabled = true;
+    statusEl.textContent = '👋 SHOW HAND TO CONTROL';
 
-  }catch(err){
-    statusEl.textContent='⚠ CAMERA DENIED — USE DRAG INSTEAD';
-    camBtn.textContent='⚠ Camera Denied';
-    console.error(err);
+  } catch (err) {
+    statusEl.textContent = '⚠ CAMERA DENIED — USE DRAG INSTEAD';
+    camBtn.textContent = '⚠ Camera Denied';
   }
 });
 
 // ═══════════════════════════════════════
-//  ANIMATION LOOP
+//  RENDER LOOP
 // ═══════════════════════════════════════
-const clock=new THREE.Clock();
-function animate(){
+const clock = new THREE.Clock();
+
+function animate() {
   requestAnimationFrame(animate);
-  const t=clock.getElapsedTime();
+  const t = clock.getElapsedTime();
 
-  rotX+=(tRotX-rotX)*0.09;
-  rotY+=(tRotY-rotY)*0.09;
-  zoom+=(tZoom-zoom)*0.09;
-  camera.position.z=zoom;
+  // ── Smooth blast lerp ──────────────────
+  blastT += (blastTarget - blastT) * blastSpeed;
+  blastT  = Math.max(0, Math.min(1, blastT));
+  updateSphereParticles();
 
-  if(!handEnabled&&!dragging) tRotY+=0.004;
+  // ── Camera & rotation smooth lerp ──────
+  rotX  += (tRotX - rotX)   * 0.07;
+  rotY  += (tRotY - rotY)   * 0.07;
+  zoom  += (tZoom - zoom)   * 0.07;
+  camera.position.z = zoom;
 
-  sphereGroup.rotation.x=rotX;
-  sphereGroup.rotation.y=rotY+t*0.04;
-  ring.rotation.y=t*0.07;
-  ringGroup.rotation.x=rotX*0.25;
-  ringGroup.rotation.y=rotY*0.4;
+  if (!handEnabled && !dragging) tRotY += 0.0035;
 
-  renderer.render(scene,camera);
+  sphereGroup.rotation.x = rotX;
+  sphereGroup.rotation.y = rotY + t * 0.035;
+
+  ring.rotation.y = t * 0.065;
+  ringGroup.rotation.x = rotX * 0.22;
+  ringGroup.rotation.y = rotY * 0.38;
+
+  // Ring pulsates slightly when blasting
+  const ringScale = 1 + blastT * 0.12;
+  ringGroup.scale.set(ringScale, ringScale, ringScale);
+
+  renderer.render(scene, camera);
 }
 
-addEventListener('resize',()=>{
-  camera.aspect=innerWidth/innerHeight;
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth,innerHeight);
-  hCanvas.width=innerWidth; hCanvas.height=innerHeight;
+  renderer.setSize(innerWidth, innerHeight);
+  hCanvas.width = innerWidth; hCanvas.height = innerHeight;
 });
 
 animate();
