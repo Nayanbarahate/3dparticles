@@ -3,416 +3,349 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Nayan – Particle Universe</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #000; overflow: hidden; font-family: 'Courier New', monospace; }
-  canvas { display: block; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#000; overflow:hidden; }
 
-#overlay {
-position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-pointer-events: none; z-index: 10;
-}
+#three-canvas { position:fixed; top:0; left:0; width:100%; height:100%; z-index:1; }
+
+/* Hand skeleton drawn HERE — visible on screen just like the original */
+#hand-canvas  { position:fixed; top:0; left:0; width:100%; height:100%; z-index:2; pointer-events:none; }
 
 #name-tag {
-position: fixed; top: 40px; left: 50%; transform: translateX(-50%);
-color: #00e5ff; font-size: clamp(18px, 5vw, 32px);
-font-family: ‘Courier New’, monospace;
-letter-spacing: 0.4em; text-transform: uppercase;
-text-shadow: 0 0 20px #00e5ff, 0 0 40px #0077ff;
-z-index: 20; pointer-events: none;
-animation: pulse 3s ease-in-out infinite;
+position:fixed; top:36px; left:50%; transform:translateX(-50%);
+color:#00e5ff; font-size:clamp(16px,5vw,28px);
+font-family:‘Courier New’,monospace; letter-spacing:0.45em; text-transform:uppercase;
+text-shadow:0 0 18px #00e5ff,0 0 40px #0055ff;
+z-index:10; pointer-events:none;
+animation:glow 3s ease-in-out infinite;
 }
-@keyframes pulse {
-0%, 100% { opacity: 0.8; text-shadow: 0 0 20px #00e5ff, 0 0 40px #0077ff; }
-50% { opacity: 1; text-shadow: 0 0 30px #00e5ff, 0 0 60px #0077ff, 0 0 80px #00aaff; }
+@keyframes glow {
+0%,100%{ text-shadow:0 0 18px #00e5ff,0 0 40px #0055ff; }
+50%    { text-shadow:0 0 30px #00e5ff,0 0 70px #0077ff,0 0 100px #00aaff; }
 }
 
-#gesture-hint {
-position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-color: rgba(0,229,255,0.6); font-size: 12px; letter-spacing: 0.15em;
-z-index: 20; pointer-events: none; text-align: center;
-transition: opacity 0.5s;
+#status {
+position:fixed; top:82px; left:50%; transform:translateX(-50%);
+color:rgba(0,229,255,0.5); font-size:11px; letter-spacing:0.2em;
+font-family:‘Courier New’,monospace; z-index:10; pointer-events:none; text-align:center;
 }
 
 #cam-btn {
-position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%);
-background: rgba(0,229,255,0.1); border: 1px solid rgba(0,229,255,0.4);
-color: #00e5ff; padding: 10px 24px; border-radius: 30px;
-font-size: 13px; letter-spacing: 0.2em; cursor: pointer; z-index: 20;
-transition: all 0.3s;
+position:fixed; bottom:52px; left:50%; transform:translateX(-50%);
+background:rgba(0,229,255,0.07); border:1px solid rgba(0,229,255,0.4);
+color:#00e5ff; padding:12px 32px; border-radius:30px;
+font-size:13px; letter-spacing:0.2em; cursor:pointer; z-index:10;
+font-family:‘Courier New’,monospace; transition:all 0.3s;
 }
-#cam-btn:hover { background: rgba(0,229,255,0.25); box-shadow: 0 0 20px rgba(0,229,255,0.3); }
+#cam-btn:hover{ background:rgba(0,229,255,0.2); box-shadow:0 0 22px rgba(0,229,255,0.3); }
 
-#cam-status {
-position: fixed; top: 90px; right: 20px;
-color: rgba(0,229,255,0.7); font-size: 11px; letter-spacing: 0.1em;
-z-index: 20; pointer-events: none;
-}
-
-#video-feed {
-position: fixed; bottom: 140px; right: 15px;
-width: 100px; height: 75px; border-radius: 8px;
-border: 1px solid rgba(0,229,255,0.3);
-object-fit: cover; z-index: 20; display: none;
-transform: scaleX(-1);
+#hint {
+position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+color:rgba(0,229,255,0.35); font-size:10px; letter-spacing:0.14em;
+font-family:‘Courier New’,monospace; z-index:10; pointer-events:none; white-space:nowrap;
 }
 
-#hand-cursor {
-position: fixed; width: 30px; height: 30px;
-border: 2px solid rgba(0,229,255,0.8);
-border-radius: 50%; pointer-events: none;
-z-index: 30; display: none;
-transform: translate(-50%, -50%);
-box-shadow: 0 0 10px rgba(0,229,255,0.5);
-transition: width 0.1s, height 0.1s;
-}
-
-.controls-info {
-position: fixed; top: 50%; left: 15px; transform: translateY(-50%);
-color: rgba(0,229,255,0.4); font-size: 10px; letter-spacing: 0.08em;
-z-index: 20; pointer-events: none; line-height: 1.8;
-}
+#video { display:none; }
 </style>
 
 </head>
 <body>
 
-<canvas id="main"></canvas>
+<canvas id="three-canvas"></canvas>
+<canvas id="hand-canvas"></canvas>
 
 <div id="name-tag">✦ Nayan ✦</div>
-<div class="controls-info">
-  🖱 DRAG → Rotate<br>
-  🖱 WHEEL → Zoom<br>
-  👋 HAND → Gesture<br>
-  ✌ PINCH → Zoom
-</div>
-<div id="cam-status">CAM: OFF</div>
-<video id="video-feed" autoplay playsinline muted></video>
-<div id="hand-cursor"></div>
-<button id="cam-btn">👋 Enable Hand Gestures</button>
-<div id="gesture-hint">DRAG TO ROTATE · SCROLL TO ZOOM</div>
+<div id="status">DRAG TO ROTATE · SCROLL TO ZOOM</div>
+<video id="video" autoplay playsinline muted></video>
+<button id="cam-btn">👋 Enable Hand Tracking</button>
+<div id="hint">OPEN PALM → ROTATE &nbsp;·&nbsp; PINCH → ZOOM</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <script>
-// ─── SCENE SETUP ───────────────────────────────────────────────────────────
-const canvas = document.getElementById('main');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setClearColor(0x000000, 1);
+// ═══════════════════════════════════════
+//  THREE.JS SCENE
+// ═══════════════════════════════════════
+const threeCanvas = document.getElementById('three-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas:threeCanvas, antialias:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.setClearColor(0x000000);
 
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+const scene  = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 500);
 camera.position.z = 3.5;
 
-// ─── STARFIELD ─────────────────────────────────────────────────────────────
-const starGeo = new THREE.BufferGeometry();
-const starCount = 2000;
-const starPositions = new Float32Array(starCount * 3);
-for (let i = 0; i < starCount * 3; i++) {
-  starPositions[i] = (Math.random() - 0.5) * 80;
-}
-starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.04, transparent: true, opacity: 0.8 });
-scene.add(new THREE.Points(starGeo, starMat));
+// Stars
+const sp = new Float32Array(2400*3);
+for(let i=0;i<sp.length;i++) sp[i]=(Math.random()-.5)*100;
+const sg=new THREE.BufferGeometry();
+sg.setAttribute('position',new THREE.BufferAttribute(sp,3));
+scene.add(new THREE.Points(sg,new THREE.PointsMaterial({color:0xffffff,size:0.05,transparent:true,opacity:0.75})));
 
-// ─── BLUE DOT SPHERE ───────────────────────────────────────────────────────
+// Blue dot sphere
 const sphereGroup = new THREE.Group();
 scene.add(sphereGroup);
-
-const dotGeo = new THREE.BufferGeometry();
-const dotPositions = [];
-const dotColors = [];
-const rows = 40, cols = 40;
-
-for (let lat = 0; lat <= rows; lat++) {
-  const theta = (lat / rows) * Math.PI;
-  for (let lon = 0; lon <= cols; lon++) {
-    const phi = (lon / cols) * 2 * Math.PI;
-    const r = 1.0;
-    dotPositions.push(
-      r * Math.sin(theta) * Math.cos(phi),
-      r * Math.cos(theta),
-      r * Math.sin(theta) * Math.sin(phi)
-    );
-    // Blue color with slight variation
-    const bright = 0.5 + 0.5 * Math.abs(Math.cos(theta));
-    dotColors.push(0.1 * bright, 0.3 * bright, 1.0 * bright);
+const dp=[],dc=[];
+for(let la=0;la<=46;la++){
+  const th=(la/46)*Math.PI;
+  for(let lo=0;lo<=46;lo++){
+    const ph=(lo/46)*2*Math.PI;
+    dp.push(Math.sin(th)*Math.cos(ph), Math.cos(th), Math.sin(th)*Math.sin(ph));
+    const b=0.5+0.5*Math.abs(Math.cos(th));
+    dc.push(0.05*b,0.22*b,b);
   }
 }
-
-dotGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(dotPositions), 3));
-dotGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(dotColors), 3));
-const dotMat = new THREE.PointsMaterial({ size: 0.025, vertexColors: true, transparent: true, opacity: 0.9 });
-const dotSphere = new THREE.Points(dotGeo, dotMat);
-sphereGroup.add(dotSphere);
-
-// Latitude/longitude lines
-const lineMat = new THREE.LineBasicMaterial({ color: 0x1144ff, transparent: true, opacity: 0.3 });
-for (let lat = 0; lat <= 10; lat++) {
-  const theta = (lat / 10) * Math.PI;
-  const pts = [];
-  for (let i = 0; i <= 64; i++) {
-    const phi = (i / 64) * 2 * Math.PI;
-    pts.push(new THREE.Vector3(
-      Math.sin(theta) * Math.cos(phi),
-      Math.cos(theta),
-      Math.sin(theta) * Math.sin(phi)
-    ));
-  }
-  const lg = new THREE.BufferGeometry().setFromPoints(pts);
-  sphereGroup.add(new THREE.Line(lg, lineMat));
+const dg=new THREE.BufferGeometry();
+dg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(dp),3));
+dg.setAttribute('color',new THREE.BufferAttribute(new Float32Array(dc),3));
+sphereGroup.add(new THREE.Points(dg,new THREE.PointsMaterial({size:0.02,vertexColors:true,transparent:true,opacity:0.95})));
+const lm=new THREE.LineBasicMaterial({color:0x1133dd,transparent:true,opacity:0.22});
+for(let i=0;i<=10;i++){
+  const th=(i/10)*Math.PI,pts=[];
+  for(let j=0;j<=64;j++) pts.push(new THREE.Vector3(Math.sin(th)*Math.cos(j/64*2*Math.PI),Math.cos(th),Math.sin(th)*Math.sin(j/64*2*Math.PI)));
+  sphereGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),lm));
 }
-for (let lon = 0; lon < 18; lon++) {
-  const phi = (lon / 18) * 2 * Math.PI;
-  const pts = [];
-  for (let i = 0; i <= 64; i++) {
-    const theta = (i / 64) * Math.PI;
-    pts.push(new THREE.Vector3(
-      Math.sin(theta) * Math.cos(phi),
-      Math.cos(theta),
-      Math.sin(theta) * Math.sin(phi)
-    ));
-  }
-  const lg = new THREE.BufferGeometry().setFromPoints(pts);
-  sphereGroup.add(new THREE.Line(lg, lineMat));
+for(let i=0;i<20;i++){
+  const ph=(i/20)*2*Math.PI,pts=[];
+  for(let j=0;j<=64;j++) pts.push(new THREE.Vector3(Math.sin(j/64*Math.PI)*Math.cos(ph),Math.cos(j/64*Math.PI),Math.sin(j/64*Math.PI)*Math.sin(ph)));
+  sphereGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),lm));
 }
 
-// ─── TEAL PARTICLE RING ────────────────────────────────────────────────────
-const ringGroup = new THREE.Group();
-scene.add(ringGroup);
-
-const ringGeo = new THREE.BufferGeometry();
-const ringPositions = [];
-const ringColors = [];
-const ringCount = 8000;
-
-for (let i = 0; i < ringCount; i++) {
-  const angle = Math.random() * Math.PI * 2;
-  const spread = (Math.random() - 0.5) * 0.45;
-  const radius = 1.65 + spread * 0.5;
-  const tilt = (Math.random() - 0.5) * 0.3;
-  ringPositions.push(
-    radius * Math.cos(angle),
-    tilt + spread * 0.3,
-    radius * Math.sin(angle)
-  );
-  const t = 0.4 + Math.random() * 0.6;
-  ringColors.push(0, t * 0.85, t * 0.75);
+// Teal particle ring
+const ringGroup=new THREE.Group(); scene.add(ringGroup);
+const rp=[],rc=[];
+for(let i=0;i<12000;i++){
+  const a=Math.random()*Math.PI*2,sp2=(Math.random()-.5)*0.52,r=1.62+sp2*0.38;
+  rp.push(r*Math.cos(a),(Math.random()-.5)*0.25+sp2*0.12,r*Math.sin(a));
+  const t=0.3+Math.random()*0.7; rc.push(0,t*0.9,t*0.72);
 }
+const rg=new THREE.BufferGeometry();
+rg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(rp),3));
+rg.setAttribute('color',new THREE.BufferAttribute(new Float32Array(rc),3));
+const ring=new THREE.Points(rg,new THREE.PointsMaterial({size:0.011,vertexColors:true,transparent:true,opacity:0.88}));
+ring.rotation.x=0.28; ringGroup.add(ring);
 
-ringGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(ringPositions), 3));
-ringGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(ringColors), 3));
-const ringMat = new THREE.PointsMaterial({ size: 0.012, vertexColors: true, transparent: true, opacity: 0.8 });
-const ring = new THREE.Points(ringGeo, ringMat);
-ring.rotation.x = 0.3;
-ringGroup.add(ring);
-
-// ─── CONSTELLATION LINES ───────────────────────────────────────────────────
-const constellationGroup = new THREE.Group();
-scene.add(constellationGroup);
-
-function addConstellationLine(points) {
-  const pts = points.map(p => new THREE.Vector3(...p));
-  const g = new THREE.BufferGeometry().setFromPoints(pts);
-  const m = new THREE.LineBasicMaterial({ color: 0x00aaff, transparent: true, opacity: 0.5 });
-  constellationGroup.add(new THREE.Line(g, m));
-  // dots at joints
-  const dg = new THREE.BufferGeometry().setFromPoints(pts);
-  const dm = new THREE.PointsMaterial({ color: 0x00ccff, size: 0.05 });
-  constellationGroup.add(new THREE.Points(dg, dm));
-}
-
-addConstellationLine([[2.5, -0.5, -1], [2.8, 0.2, -1.2], [3.1, -0.3, -1.1], [2.9, 0.5, -0.8]]);
-addConstellationLine([[-2.5, 0.8, -1.5], [-2.9, 0.2, -1.3], [-3.2, 0.6, -1.0]]);
-
-// ─── INTERACTION ───────────────────────────────────────────────────────────
-let isDragging = false;
-let prevMouse = { x: 0, y: 0 };
-let rotX = 0, rotY = 0;
-let targetRotX = 0, targetRotY = 0;
-let zoomLevel = 3.5;
-let targetZoom = 3.5;
-
-canvas.addEventListener('mousedown', e => { isDragging = true; prevMouse = { x: e.clientX, y: e.clientY }; });
-canvas.addEventListener('mouseup', () => isDragging = false);
-canvas.addEventListener('mousemove', e => {
-  if (!isDragging) return;
-  const dx = e.clientX - prevMouse.x;
-  const dy = e.clientY - prevMouse.y;
-  targetRotY += dx * 0.008;
-  targetRotX += dy * 0.008;
-  prevMouse = { x: e.clientX, y: e.clientY };
-});
-canvas.addEventListener('wheel', e => {
-  targetZoom = Math.max(1.5, Math.min(8, targetZoom + e.deltaY * 0.005));
+// Constellations
+const cm2=new THREE.LineBasicMaterial({color:0x00aaff,transparent:true,opacity:0.55});
+const pm2=new THREE.PointsMaterial({color:0x00ccff,size:0.055});
+[[[2.4,-.4,-.8],[2.75,.15,-1],[3.1,-.2,-.9],[2.9,.5,-.7]],
+ [[-2.4,.7,-1.2],[-2.85,.1,-1],[-3.1,.55,-.8]]
+].forEach(pts=>{
+  const v=pts.map(p=>new THREE.Vector3(...p));
+  const g=new THREE.BufferGeometry().setFromPoints(v);
+  scene.add(new THREE.Line(g,cm2)); scene.add(new THREE.Points(g,pm2));
 });
 
-// Touch
-let lastTouchDist = null;
-canvas.addEventListener('touchstart', e => {
-  if (e.touches.length === 1) {
-    isDragging = true;
-    prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+// ═══════════════════════════════════════
+//  MOUSE / TOUCH CONTROLS
+// ═══════════════════════════════════════
+let rotX=0,rotY=0,tRotX=0,tRotY=0,zoom=3.5,tZoom=3.5;
+let dragging=false,lmx=0,lmy=0;
+
+threeCanvas.addEventListener('mousedown',e=>{dragging=true;lmx=e.clientX;lmy=e.clientY;});
+addEventListener('mouseup',()=>dragging=false);
+addEventListener('mousemove',e=>{
+  if(!dragging)return;
+  tRotY+=(e.clientX-lmx)*0.007; tRotX+=(e.clientY-lmy)*0.007;
+  lmx=e.clientX; lmy=e.clientY;
+});
+addEventListener('wheel',e=>{tZoom=Math.max(1.5,Math.min(9,tZoom+e.deltaY*0.005));});
+
+let lastTD=null;
+threeCanvas.addEventListener('touchstart',e=>{
+  if(e.touches.length===1){dragging=true;lmx=e.touches[0].clientX;lmy=e.touches[0].clientY;}
+},{passive:true});
+addEventListener('touchend',()=>{dragging=false;lastTD=null;});
+addEventListener('touchmove',e=>{
+  if(e.touches.length===1&&dragging){
+    tRotY+=(e.touches[0].clientX-lmx)*0.007; tRotX+=(e.touches[0].clientY-lmy)*0.007;
+    lmx=e.touches[0].clientX; lmy=e.touches[0].clientY;
+  } else if(e.touches.length===2){
+    const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+    if(lastTD) tZoom=Math.max(1.5,Math.min(9,tZoom-(d-lastTD)*0.012));
+    lastTD=d;
   }
-}, { passive: true });
-canvas.addEventListener('touchend', () => { isDragging = false; lastTouchDist = null; });
-canvas.addEventListener('touchmove', e => {
-  if (e.touches.length === 1 && isDragging) {
-    const dx = e.touches[0].clientX - prevMouse.x;
-    const dy = e.touches[0].clientY - prevMouse.y;
-    targetRotY += dx * 0.008;
-    targetRotX += dy * 0.008;
-    prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-  } else if (e.touches.length === 2) {
-    const dx = e.touches[0].clientX - e.touches[1].clientX;
-    const dy = e.touches[0].clientY - e.touches[1].clientY;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (lastTouchDist !== null) {
-      targetZoom = Math.max(1.5, Math.min(8, targetZoom - (dist - lastTouchDist) * 0.01));
+},{passive:true});
+
+// ═══════════════════════════════════════
+//  HAND CANVAS — visible skeleton
+// ═══════════════════════════════════════
+const hCanvas=document.getElementById('hand-canvas');
+const hCtx=hCanvas.getContext('2d');
+hCanvas.width=innerWidth; hCanvas.height=innerHeight;
+
+// MediaPipe 21-landmark connections
+const CONNECTIONS=[
+  [0,1],[1,2],[2,3],[3,4],
+  [0,5],[5,6],[6,7],[7,8],
+  [5,9],[9,10],[10,11],[11,12],
+  [9,13],[13,14],[14,15],[15,16],
+  [13,17],[17,18],[18,19],[19,20],
+  [0,17]
+];
+const TIPS=[4,8,12,16,20];
+
+function drawHand(lms){
+  hCtx.clearRect(0,0,hCanvas.width,hCanvas.height);
+  if(!lms||!lms.length) return;
+
+  const X=i=>(1-lms[i].x)*hCanvas.width;
+  const Y=i=>lms[i].y*hCanvas.height;
+
+  // Glow lines
+  hCtx.lineWidth=2;
+  CONNECTIONS.forEach(([a,b])=>{
+    hCtx.beginPath();
+    hCtx.moveTo(X(a),Y(a)); hCtx.lineTo(X(b),Y(b));
+    hCtx.strokeStyle='rgba(0,200,255,0.65)';
+    hCtx.shadowColor='#00e5ff'; hCtx.shadowBlur=10;
+    hCtx.stroke();
+  });
+
+  // Landmark dots with radial glow
+  lms.forEach((pt,i)=>{
+    const x=X(i), y=Y(i);
+    const isTip=TIPS.includes(i), isWrist=i===0;
+    const r=isTip?7:isWrist?6:4;
+
+    // Outer halo
+    hCtx.beginPath(); hCtx.arc(x,y,r*2.2,0,Math.PI*2);
+    hCtx.fillStyle=`rgba(0,229,255,${isTip?0.15:0.08})`;
+    hCtx.shadowBlur=0; hCtx.fill();
+
+    // Core particle
+    const g=hCtx.createRadialGradient(x,y,0,x,y,r);
+    g.addColorStop(0,'#ffffff');
+    g.addColorStop(0.35,'#00e5ff');
+    g.addColorStop(1,'rgba(0,80,255,0)');
+    hCtx.beginPath(); hCtx.arc(x,y,r,0,Math.PI*2);
+    hCtx.fillStyle=g;
+    hCtx.shadowColor='#00e5ff'; hCtx.shadowBlur=isTip?18:10;
+    hCtx.fill();
+  });
+
+  // Fingertip extra spark
+  TIPS.forEach(i=>{
+    const x=X(i),y=Y(i);
+    for(let s=0;s<4;s++){
+      const a=Math.random()*Math.PI*2, d=6+Math.random()*6;
+      hCtx.beginPath(); hCtx.arc(x+Math.cos(a)*d,y+Math.sin(a)*d,1,0,Math.PI*2);
+      hCtx.fillStyle='rgba(0,229,255,0.55)'; hCtx.shadowBlur=4; hCtx.fill();
     }
-    lastTouchDist = dist;
-  }
-}, { passive: true });
+  });
 
-// ─── HAND GESTURE (MediaPipe via CDN) ──────────────────────────────────────
-const camBtn = document.getElementById('cam-btn');
-const camStatus = document.getElementById('cam-status');
-const videoFeed = document.getElementById('video-feed');
-const handCursor = document.getElementById('hand-cursor');
-let handActive = false;
-let prevHandX = null, prevHandY = null;
-let prevPinchDist = null;
+  hCtx.shadowBlur=0;
+}
 
-camBtn.addEventListener('click', async () => {
-  if (handActive) return;
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-    videoFeed.srcObject = stream;
-    videoFeed.style.display = 'block';
-    handCursor.style.display = 'block';
-    camStatus.textContent = 'CAM: ON — Loading AI...';
-    camBtn.style.display = 'none';
+// ═══════════════════════════════════════
+//  MEDIAPIPE SETUP
+// ═══════════════════════════════════════
+const video=document.getElementById('video');
+const statusEl=document.getElementById('status');
+const camBtn=document.getElementById('cam-btn');
+let handEnabled=false, prevPinch=null, prevIX=null, prevIY=null;
 
-    // Load MediaPipe Hands
-    const script1 = document.createElement('script');
-    script1.src = 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js';
-    document.head.appendChild(script1);
+function loadScript(src){
+  return new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s);
+  });
+}
 
-    const script2 = document.createElement('script');
-    script2.src = 'https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js';
-    document.head.appendChild(script2);
+camBtn.addEventListener('click',async()=>{
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({video:{width:640,height:480,facingMode:'user'}});
+    video.srcObject=stream; await video.play();
+    camBtn.style.display='none';
+    statusEl.textContent='LOADING HAND AI MODEL...';
 
-    script2.onload = () => {
-      const hands = new Hands({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
-      hands.setOptions({ maxNumHands: 1, modelComplexity: 0, minDetectionConfidence: 0.7, minTrackingConfidence: 0.5 });
+    await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js');
+    await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js');
 
-      hands.onResults(results => {
-        if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
-          prevHandX = null; prevHandY = null; prevPinchDist = null;
-          handCursor.style.opacity = '0.3';
-          return;
-        }
+    const hands=new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
+    hands.setOptions({maxNumHands:1,modelComplexity:1,minDetectionConfidence:0.75,minTrackingConfidence:0.6});
 
-        const lm = results.multiHandLandmarks[0];
-        const wrist = lm[0];
-        const indexTip = lm[8];
-        const thumbTip = lm[4];
-        const middleTip = lm[12];
+    hands.onResults(results=>{
+      const lms=results.multiHandLandmarks?.[0];
+      drawHand(lms);
 
-        // Move cursor to index finger
-        const cx = (1 - indexTip.x) * window.innerWidth;
-        const cy = indexTip.y * window.innerHeight;
-        handCursor.style.left = cx + 'px';
-        handCursor.style.top = cy + 'px';
-        handCursor.style.opacity = '1';
+      if(!lms){
+        prevPinch=null; prevIX=null; prevIY=null;
+        statusEl.textContent='👋 SHOW HAND TO CONTROL';
+        return;
+      }
 
-        // Detect pinch (thumb ↔ index) for ZOOM
-        const pinchDx = thumbTip.x - indexTip.x;
-        const pinchDy = thumbTip.y - indexTip.y;
-        const pinchDist = Math.sqrt(pinchDx * pinchDx + pinchDy * pinchDy);
+      const thumb=lms[4], index=lms[8], indexMCP=lms[5];
 
-        if (prevPinchDist !== null) {
-          const pinchDelta = pinchDist - prevPinchDist;
-          targetZoom = Math.max(1.5, Math.min(8, targetZoom - pinchDelta * 15));
-        }
-        prevPinchDist = pinchDist;
+      // PINCH = thumb ↔ index distance → ZOOM
+      const pd=Math.hypot(thumb.x-index.x,thumb.y-index.y);
+      if(prevPinch!==null){
+        const delta=pd-prevPinch;
+        tZoom=Math.max(1.5,Math.min(9,tZoom-delta*20));
+      }
+      prevPinch=pd;
+      const isPinching=pd<0.07;
 
-        // Visual: pinching = smaller cursor
-        const isPinching = pinchDist < 0.07;
-        handCursor.style.width = isPinching ? '15px' : '30px';
-        handCursor.style.height = isPinching ? '15px' : '30px';
-        handCursor.style.background = isPinching ? 'rgba(0,229,255,0.4)' : 'transparent';
+      // OPEN PALM → ROTATE (index extended above MCP)
+      const isOpen=index.y<indexMCP.y-0.04;
+      if(isOpen&&!isPinching&&prevIX!==null){
+        const dx=(1-index.x)-prevIX;
+        const dy=index.y-prevIY;
+        tRotY-=dx*8; tRotX+=dy*8;
+      }
+      prevIX=1-index.x; prevIY=index.y;
 
-        // Detect fist (all fingers closed) for drag/rotate
-        const indexBase = lm[5];
-        const isOpen = indexTip.y < indexBase.y; // finger extended upward
+      statusEl.textContent=isPinching?'🤏 PINCH — ZOOMING':isOpen?'🖐 PALM — ROTATING':'✊ CLOSE — LOCKED';
+    });
 
-        if (isOpen && prevHandX !== null) {
-          const dxH = (1 - indexTip.x) - prevHandX;
-          const dyH = indexTip.y - prevHandY;
-          targetRotY -= dxH * 6;
-          targetRotX += dyH * 6;
-        }
-        prevHandX = 1 - indexTip.x;
-        prevHandY = indexTip.y;
+    const cam=new Camera(video,{
+      onFrame:async()=>await hands.send({image:video}),
+      width:640,height:480
+    });
+    await cam.start();
+    handEnabled=true;
+    statusEl.textContent='👋 SHOW HAND TO CONTROL';
 
-        camStatus.textContent = isPinching ? 'PINCH: ZOOM 🤏' : isOpen ? 'HAND: ROTATE 🖐' : 'CAM: TRACKING';
-      });
-
-      const cam = new Camera(videoFeed, {
-        onFrame: async () => { await hands.send({ image: videoFeed }); },
-        width: 320, height: 240
-      });
-      cam.start();
-      handActive = true;
-      camStatus.textContent = 'CAM: ON ✓';
-    };
-  } catch (e) {
-    camStatus.textContent = 'CAM: DENIED';
-    camBtn.textContent = '⚠ Camera denied';
+  }catch(err){
+    statusEl.textContent='⚠ CAMERA DENIED — USE DRAG INSTEAD';
+    camBtn.textContent='⚠ Camera Denied';
+    console.error(err);
   }
 });
 
-// ─── ANIMATE ───────────────────────────────────────────────────────────────
-const clock = new THREE.Clock();
-function animate() {
+// ═══════════════════════════════════════
+//  ANIMATION LOOP
+// ═══════════════════════════════════════
+const clock=new THREE.Clock();
+function animate(){
   requestAnimationFrame(animate);
-  const t = clock.getElapsedTime();
+  const t=clock.getElapsedTime();
 
-  // Smooth interpolation
-  rotX += (targetRotX - rotX) * 0.08;
-  rotY += (targetRotY - rotY) * 0.08;
-  zoomLevel += (targetZoom - zoomLevel) * 0.08;
-  camera.position.z = zoomLevel;
+  rotX+=(tRotX-rotX)*0.09;
+  rotY+=(tRotY-rotY)*0.09;
+  zoom+=(tZoom-zoom)*0.09;
+  camera.position.z=zoom;
 
-  // Auto slow rotation when not dragging
-  if (!isDragging && !handActive) {
-    targetRotY += 0.003;
-  }
+  if(!handEnabled&&!dragging) tRotY+=0.004;
 
-  sphereGroup.rotation.x = rotX;
-  sphereGroup.rotation.y = rotY + t * 0.05;
+  sphereGroup.rotation.x=rotX;
+  sphereGroup.rotation.y=rotY+t*0.04;
+  ring.rotation.y=t*0.07;
+  ringGroup.rotation.x=rotX*0.25;
+  ringGroup.rotation.y=rotY*0.4;
 
-  ring.rotation.y = t * 0.08;
-  ringGroup.rotation.x = rotX * 0.3;
-  ringGroup.rotation.y = rotY * 0.5;
-
-  constellationGroup.rotation.y = t * 0.015;
-
-  // Twinkle stars
-  starMat.opacity = 0.6 + 0.2 * Math.sin(t * 0.7);
-
-  renderer.render(scene, camera);
+  renderer.render(scene,camera);
 }
 
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
+addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(innerWidth,innerHeight);
+  hCanvas.width=innerWidth; hCanvas.height=innerHeight;
 });
 
 animate();
